@@ -1,0 +1,61 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-12">
+      <h2>Available Books</h2>
+      
+      <!-- Search and Filter Section -->
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="Search books..." 
+                   [(ngModel)]="searchTerm" (input)="onSearch()">
+            <button class="btn btn-outline-secondary" type="button" (click)="onSearch()">
+              Search
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" [(ngModel)]="selectedCategory" (change)="onCategoryFilter()">
+            <option value="">All Categories</option>
+            <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-secondary" (click)="resetFilters()">Reset Filters</button>
+        </div>
+      </div>
+      
+      <!-- Books Grid -->
+      <div class="row" *ngIf="books.length > 0; else noBooks">
+        <div class="col-md-4 mb-4" *ngFor="let book of books">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">{{ book.title }}</h5>
+              <h6 class="card-subtitle mb-2 text-muted">by {{ book.author }}</h6>
+              <p class="card-text">{{ book.description | slice:0:100 }}...</p>
+              <p class="card-text">
+                <strong>Category:</strong> {{ book.category }}<br>
+                <strong>Price:</strong> ${{ book.price }}<br>
+                <strong>Stock:</strong> {{ book.stock }}
+              </p>
+            </div>
+            <div class="card-footer">
+              <button class="btn btn-primary w-100" 
+                      [disabled]="book.stock === 0" 
+                      (click)="addToCart(book)">
+                {{ book.stock === 0 ? 'Out of Stock' : 'Add to Cart' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <ng-template #noBooks>
+        <div class="alert alert-info text-center">
+          <h4>No books available</h4>
+          <p>{{ searchTerm || selectedCategory ? 'No books match your search criteria.' : 'The catalog is currently empty.' }}</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

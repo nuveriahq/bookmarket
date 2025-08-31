@@ -1,0 +1,365 @@
+<!-- admin-dashboard.component.html - ENHANCED INTERACTIVE VERSION -->
+<div class="container-fluid mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard</h2>
+        <div class="btn-group" role="group">
+          <button class="btn btn-outline-primary" (click)="retryBooks()">
+            <i class="fas fa-sync-alt"></i> Refresh Books
+          </button>
+          <button class="btn btn-outline-success" (click)="retryOrders()">
+            <i class="fas fa-sync-alt"></i> Refresh Orders
+          </button>
+        </div>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card text-white bg-primary shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h4 class="card-title">{{ stats.totalBooks }}</h4>
+                  <p class="card-text">Total Books</p>
+                </div>
+                <div class="align-self-center">
+                  <i class="fas fa-book fa-2x"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-white bg-success shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h4 class="card-title">{{ stats.totalOrders }}</h4>
+                  <p class="card-text">Total Orders</p>
+                </div>
+                <div class="align-self-center">
+                  <i class="fas fa-shopping-cart fa-2x"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-white bg-info shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h4 class="card-title">${{ stats.totalRevenue | number:'1.2-2' }}</h4>
+                  <p class="card-text">Total Revenue</p>
+                </div>
+                <div class="align-self-center">
+                  <i class="fas fa-dollar-sign fa-2x"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-white bg-warning shadow-sm">
+            <div class="card-body">
+              <div class="d-flex justify-content-between">
+                <div>
+                  <h4 class="card-title">{{ stats.lowStockBooks }}</h4>
+                  <p class="card-text">Low Stock</p>
+                </div>
+                <div class="align-self-center">
+                  <i class="fas fa-exclamation-triangle fa-2x"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add New Book Section -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="fas fa-plus me-2"></i>Add New Book</h5>
+        </div>
+        <div class="card-body">
+          <form (ngSubmit)="addBook()" #bookForm="ngForm">
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label">Title *</label>
+                <input type="text" class="form-control" placeholder="Book Title" 
+                       [(ngModel)]="newBook.title" name="title" required>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Author *</label>
+                <input type="text" class="form-control" placeholder="Author Name" 
+                       [(ngModel)]="newBook.author" name="author" required>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Price *</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="number" class="form-control" placeholder="0.00" 
+                         [(ngModel)]="newBook.price" name="price" step="0.01" required>
+                </div>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Category</label>
+                <input type="text" class="form-control" placeholder="Category" 
+                       [(ngModel)]="newBook.category" name="category">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Stock</label>
+                <input type="number" class="form-control" placeholder="0" 
+                       [(ngModel)]="newBook.stock" name="stock" min="0">
+              </div>
+            </div>
+            <div class="row mt-3">
+              <div class="col-12">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" rows="2" placeholder="Book description..." 
+                          [(ngModel)]="newBook.description" name="description"></textarea>
+              </div>
+            </div>
+            <div class="mt-3">
+              <button type="submit" class="btn btn-primary me-2" [disabled]="!bookForm.valid">
+                <i class="fas fa-plus me-1"></i>Add Book
+              </button>
+              <button type="button" class="btn btn-outline-secondary" 
+                      (click)="newBook = {}; bookForm.resetForm()">
+                <i class="fas fa-times me-1"></i>Clear
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Books Management Section -->
+      <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-success text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-books me-2"></i>Manage Books</h5>
+            <div class="d-flex align-items-center">
+              <input type="text" class="form-control form-control-sm me-2" 
+                     style="width: 200px;" placeholder="Search books..." 
+                     [(ngModel)]="bookSearchTerm">
+              <span class="badge bg-light text-dark">{{ filteredBooks().length }} books</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Loading State -->
+          <div *ngIf="booksLoading" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading books...</span>
+            </div>
+            <p class="mt-2">Loading books...</p>
+          </div>
+
+          <!-- Error State -->
+          <div *ngIf="booksError && !booksLoading" class="alert alert-danger" role="alert">
+            <h6 class="alert-heading">Error Loading Books</h6>
+            <p class="mb-0">{{ booksError }}</p>
+            <hr>
+            <button class="btn btn-outline-danger btn-sm" (click)="retryBooks()">
+              <i class="fas fa-redo me-1"></i>Try Again
+            </button>
+          </div>
+
+          <!-- Books Table -->
+          <div *ngIf="!booksLoading && !booksError" class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th><i class="fas fa-book me-1"></i>Title</th>
+                  <th><i class="fas fa-user me-1"></i>Author</th>
+                  <th><i class="fas fa-dollar-sign me-1"></i>Price</th>
+                  <th><i class="fas fa-tag me-1"></i>Category</th>
+                  <th><i class="fas fa-boxes me-1"></i>Stock</th>
+                  <th><i class="fas fa-cogs me-1"></i>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let book of filteredBooks()" [ngClass]="{'table-warning': (book.stock || 0) < 10 && (book.stock || 0) > 0, 'table-danger': (book.stock || 0) === 0}">
+                  <td class="fw-bold">{{ book.title }}</td>
+                  <td>{{ book.author }}</td>
+                  <td>${{ book.price | number:'1.2-2' }}</td>
+                  <td>
+                    <span class="badge bg-secondary">{{ book.category }}</span>
+                  </td>
+                  <td>
+                    <span [ngClass]="getStockClass(book.stock || 0)">
+                      {{ book.stock || 0 }}
+                      <i *ngIf="(book.stock || 0) === 0" class="fas fa-exclamation-triangle ms-1"></i>
+                      <i *ngIf="(book.stock || 0) < 10 && (book.stock || 0) > 0" class="fas fa-exclamation ms-1"></i>
+                    </span>
+                  </td>
+                  <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button class="btn btn-outline-warning" (click)="editBook(book)" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button class="btn btn-outline-danger" (click)="deleteBook(book.id!)" title="Delete">
+                        <i class="fas fa-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            
+            <!-- Empty State -->
+            <div *ngIf="filteredBooks().length === 0" class="text-center py-4">
+              <i class="fas fa-search fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No books found</h5>
+              <p class="text-muted" *ngIf="bookSearchTerm">Try adjusting your search criteria</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Orders Management Section -->
+      <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Manage Orders</h5>
+            <div class="d-flex align-items-center">
+              <select class="form-select form-select-sm me-2" 
+                      [(ngModel)]="orderStatusFilter" style="width: 150px;">
+                <option value="ALL">All Orders</option>
+                <option value="PENDING">Pending</option>
+                <option value="SHIPPED">Shipped</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+              <span class="badge bg-light text-dark">{{ filteredOrders().length }} orders</span>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- Loading State -->
+          <div *ngIf="ordersLoading" class="text-center py-4">
+            <div class="spinner-border text-info" role="status">
+              <span class="visually-hidden">Loading orders...</span>
+            </div>
+            <p class="mt-2">Loading orders...</p>
+          </div>
+
+          <!-- Error State -->
+          <div *ngIf="ordersError && !ordersLoading" class="alert alert-danger" role="alert">
+            <h6 class="alert-heading">Error Loading Orders</h6>
+            <p class="mb-0">{{ ordersError }}</p>
+            <hr>
+            <button class="btn btn-outline-danger btn-sm" (click)="retryOrders()">
+              <i class="fas fa-redo me-1"></i>Try Again
+            </button>
+          </div>
+
+          <!-- Orders Table -->
+          <div *ngIf="!ordersLoading && !ordersError" class="table-responsive">
+            <table class="table table-hover">
+              <thead class="table-light">
+                <tr>
+                  <th><i class="fas fa-hashtag me-1"></i>Order ID</th>
+                  <th><i class="fas fa-user me-1"></i>Customer</th>
+                  <th><i class="fas fa-calendar me-1"></i>Date</th>
+                  <th><i class="fas fa-dollar-sign me-1"></i>Total</th>
+                  <th><i class="fas fa-info-circle me-1"></i>Status</th>
+                  <th><i class="fas fa-map-marker-alt me-1"></i>Address</th>
+                  <th><i class="fas fa-cogs me-1"></i>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let order of filteredOrders()">
+                  <td class="fw-bold">#{{ order.id }}</td>
+                  <td>{{ order.user?.email || order.user?.username || 'N/A' }}</td>
+                  <td>{{ order.orderDate | date:'short' }}</td>
+                  <td class="fw-bold text-success">${{ order.totalAmount | number:'1.2-2' }}</td>
+                  <td>
+                    <select class="form-select form-select-sm" 
+                            [value]="order.status" 
+                            (change)="updateOrderStatus(order.id!, $any($event.target).value)">
+                      <option value="PENDING">PENDING</option>
+                      <option value="SHIPPED">SHIPPED</option>
+                      <option value="DELIVERED">DELIVERED</option>
+                      <option value="CANCELLED">CANCELLED</option>
+                    </select>
+                  </td>
+                  <td class="text-truncate" style="max-width: 150px;" [title]="order.address">
+                    {{ order.address }}
+                  </td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-info" (click)="viewOrderDetails(order)" title="View Details">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <!-- Empty State -->
+            <div *ngIf="filteredOrders().length === 0" class="text-center py-4">
+              <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+              <h5 class="text-muted">No orders found</h5>
+              <p class="text-muted" *ngIf="orderStatusFilter !== 'ALL'">No {{ orderStatusFilter.toLowerCase() }} orders</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Book Modal -->
+<div class="modal fade show" *ngIf="editingBook" style="display: block; background-color: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Book</h5>
+        <button type="button" class="btn-close" (click)="cancelEdit()"></button>
+      </div>
+      <div class="modal-body">
+        <form>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Title *</label>
+              <input type="text" class="form-control" [(ngModel)]="editingBook.title" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Author *</label>
+              <input type="text" class="form-control" [(ngModel)]="editingBook.author" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Price *</label>
+              <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input type="number" class="form-control" [(ngModel)]="editingBook.price" step="0.01" required>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Category</label>
+              <input type="text" class="form-control" [(ngModel)]="editingBook.category">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Stock</label>
+              <input type="number" class="form-control" [(ngModel)]="editingBook.stock" min="0">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" rows="3" [(ngModel)]="editingBook.description"></textarea>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="cancelEdit()">
+          <i class="fas fa-times me-1"></i>Cancel
+        </button>
+        <button type="button" class="btn btn-warning" (click)="updateBook()">
+          <i class="fas fa-save me-1"></i>Update Book
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
