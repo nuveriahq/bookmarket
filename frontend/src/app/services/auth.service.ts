@@ -2,6 +2,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, tap } from 'rxjs';
+import { CartService } from './cart.service';
 
 export interface LoginRequest {
   username: string;
@@ -31,7 +32,7 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<any>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private cartService: CartService) {
     // Load user data from localStorage on service initialization
     this.loadUserFromStorage();
   }
@@ -55,6 +56,8 @@ export class AuthService {
           if (response && response.token) {
             console.log('Login successful:', response);
             this.setAuthData(response);
+            // Clear cart on login to ensure fresh cart for each user
+            this.cartService.clearCart();
           }
         })
       );
@@ -78,6 +81,8 @@ export class AuthService {
   logout(): void {
     this.clearAuthData();
     this.currentUserSubject.next(null);
+    // Clear cart when user logs out to prevent cart sharing between users
+    this.cartService.clearCart();
   }
 
   clearAuthData(): void {

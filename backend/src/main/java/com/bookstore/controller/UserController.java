@@ -126,10 +126,21 @@ public class UserController {
             logger.info("Getting all users (admin request)");
             
             List<User> users = userService.findAllUsers();
-            // Remove passwords from all users
-            users.forEach(user -> user.setPassword(null));
+            // Convert to DTOs to avoid serialization issues
+            List<UserProfileDto> userDtos = users.stream()
+                .map(user -> new UserProfileDto(
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getAddress(),
+                    user.getAge(),
+                    user.getCustomerId(),
+                    user.getRole().name(),
+                    user.getCreatedDate()
+                ))
+                .toList();
             
-            return ResponseEntity.ok(users);
+            return ResponseEntity.ok(userDtos);
         } catch (Exception e) {
             logger.error("Error getting all users: {}", e.getMessage());
             return ResponseEntity.badRequest().body("Failed to get users: " + e.getMessage());

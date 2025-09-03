@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -49,6 +50,7 @@ public class User implements UserDetails {
     private LocalDateTime createdDate = LocalDateTime.now();
     
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonBackReference // This prevents circular reference with Order entity
     private List<Order> orders;
     
     // Constructors
