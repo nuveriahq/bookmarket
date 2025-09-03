@@ -31,6 +31,9 @@
           <a class="nav-link" routerLink="/register" routerLinkActive="active">Register</a>
         </li>
         <li class="nav-item" *ngIf="isLoggedIn()">
+          <a class="nav-link" routerLink="/profile" routerLinkActive="active">Profile</a>
+        </li>
+        <li class="nav-item" *ngIf="isLoggedIn()">
           <a class="nav-link" (click)="logout()" style="cursor: pointer;">Logout</a>
         </li>
       </ul>

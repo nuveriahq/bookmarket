@@ -15,6 +15,8 @@ import { CartComponent } from './components/cart/cart.component';
 import { CheckoutComponent } from './components/checkout/checkout.component';
 import { OrderHistoryComponent } from './components/order-history/order-history.component';
 import { AdminDashboardComponent } from './components/admin/admin-dashboard.component';
+import { UserProfileComponent } from './components/user-profile/user-profile.component';
+import { PaymentComponent } from './components/payment/payment.component';
 
 import { AuthInterceptor } from './interceptors/auth.interceptor';
 
@@ -27,7 +29,9 @@ import { AuthInterceptor } from './interceptors/auth.interceptor';
     CartComponent,
     CheckoutComponent,
     OrderHistoryComponent,
-    AdminDashboardComponent
+    AdminDashboardComponent,
+    UserProfileComponent,
+    PaymentComponent
   ],
   imports: [
     BrowserModule,

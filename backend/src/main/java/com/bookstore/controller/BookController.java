@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/books")
@@ -20,6 +22,17 @@ public class BookController {
     @GetMapping
     public List<Book> getAllBooks() {
         return bookService.getAllBooks();
+    }
+    
+    @GetMapping("/paginated")
+    public ResponseEntity<?> getBooksPaginated(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            return ResponseEntity.ok(bookService.getBooksPaginated(page, size));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to get books: " + e.getMessage());
+        }
     }
     
     @GetMapping("/{id}")
@@ -70,5 +83,25 @@ public class BookController {
     @GetMapping("/categories")
     public List<String> getAllCategories() {
         return bookService.getAllCategories();
+    }
+    
+    @PostMapping("/upload-csv")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> uploadBooksCSV(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body("Please select a CSV file to upload");
+            }
+            
+            if (!file.getOriginalFilename().toLowerCase().endsWith(".csv")) {
+                return ResponseEntity.badRequest().body("Please upload a CSV file");
+            }
+            
+            int booksAdded = bookService.uploadBooksFromCSV(file);
+            return ResponseEntity.ok(Map.of("booksAdded", booksAdded));
+            
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to upload CSV: " + e.getMessage());
+        }
     }
 }

@@ -16,6 +16,18 @@ export class BookListComponent implements OnInit {
   searchTerm = '';
   selectedCategory = '';
   allBooks: Book[] = [];
+  
+  // Pagination
+  currentPage = 0;
+  pageSize = 10;
+  totalItems = 0;
+  totalPages = 0;
+  hasNext = false;
+  hasPrevious = false;
+  loading = false;
+  
+  // Math reference for template
+  Math = Math;
 
   constructor(
     private bookService: BookService,
@@ -24,7 +36,7 @@ export class BookListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadBooks();
+    this.loadBooksPaginated();
     this.loadCategories();
   }
 
@@ -35,6 +47,25 @@ export class BookListComponent implements OnInit {
         this.allBooks = books;
       },
       error: (error) => console.error('Error loading books:', error)
+    });
+  }
+
+  loadBooksPaginated(): void {
+    this.loading = true;
+    this.bookService.getBooksPaginated(this.currentPage, this.pageSize).subscribe({
+      next: (response) => {
+        this.books = response.books;
+        this.currentPage = response.currentPage;
+        this.totalItems = response.totalItems;
+        this.totalPages = response.totalPages;
+        this.hasNext = response.hasNext;
+        this.hasPrevious = response.hasPrevious;
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading books:', error);
+        this.loading = false;
+      }
     });
   }
 
@@ -52,7 +83,8 @@ export class BookListComponent implements OnInit {
         error: (error) => console.error('Error searching books:', error)
       });
     } else {
-      this.loadBooks();
+      this.currentPage = 0;
+      this.loadBooksPaginated();
     }
   }
 
@@ -63,18 +95,66 @@ export class BookListComponent implements OnInit {
         error: (error) => console.error('Error filtering books:', error)
       });
     } else {
-      this.loadBooks();
+      this.currentPage = 0;
+      this.loadBooksPaginated();
     }
   }
 
   resetFilters(): void {
     this.searchTerm = '';
     this.selectedCategory = '';
-    this.loadBooks();
+    this.currentPage = 0;
+    this.loadBooksPaginated();
+  }
+
+  goToPage(page: number): void {
+    this.currentPage = page;
+    this.loadBooksPaginated();
+  }
+
+  nextPage(): void {
+    if (this.hasNext) {
+      this.currentPage++;
+      this.loadBooksPaginated();
+    }
+  }
+
+  previousPage(): void {
+    if (this.hasPrevious) {
+      this.currentPage--;
+      this.loadBooksPaginated();
+    }
+  }
+
+  changePageSize(size: number): void {
+    this.pageSize = size;
+    this.currentPage = 0;
+    this.loadBooksPaginated();
   }
 
   addToCart(book: Book): void {
-    this.cartService.addToCart(book);
-    alert('Book added to cart successfully!');
+    const success = this.cartService.addToCart(book);
+    if (success) {
+      alert('Book added to cart successfully!');
+    } else {
+      alert('Cannot add more items than available in stock!');
+    }
+  }
+
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(0, this.currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(this.totalPages - 1, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(0, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
   }
 }

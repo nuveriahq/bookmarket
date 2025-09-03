@@ -1,11 +1,12 @@
 <div class="container mt-4">
-  <h2>Checkout</h2>
+  <h2><i class="fas fa-shopping-cart me-2"></i>Checkout</h2>
   
-  <div class="row">
+  <!-- Checkout Form -->
+  <div *ngIf="!showPayment" class="row">
     <div class="col-md-8">
-      <div class="card">
-        <div class="card-header">
-          <h5>Order Summary</h5>
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0"><i class="fas fa-list me-2"></i>Order Summary</h5>
         </div>
         <div class="card-body">
           <div *ngFor="let item of cartItems" class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
@@ -26,24 +27,77 @@
     </div>
     
     <div class="col-md-4">
-      <div class="card">
-        <div class="card-header">
-          <h5>Shipping Information</h5>
+      <div class="card shadow">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0"><i class="fas fa-truck me-2"></i>Shipping Information</h5>
         </div>
         <div class="card-body">
-          <form [formGroup]="checkoutForm" (ngSubmit)="placeOrder()">
+          <form [formGroup]="checkoutForm" (ngSubmit)="proceedToPayment()">
             <div class="mb-3">
               <label class="form-label">Delivery Address</label>
-              <textarea class="form-control" rows="3" formControlName="address" required></textarea>
+              <textarea class="form-control" rows="3" formControlName="address" 
+                        placeholder="Enter your complete delivery address" required></textarea>
             </div>
             
             <button type="submit" class="btn btn-success w-100" 
-                    [disabled]="checkoutForm.invalid || loading">
-              {{ loading ? 'Processing...' : 'Place Order' }}
+                    [disabled]="checkoutForm.invalid">
+              <i class="fas fa-credit-card me-2"></i>Proceed to Payment
             </button>
           </form>
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Payment Section -->
+  <div *ngIf="showPayment">
+    <div class="row">
+      <div class="col-md-8">
+        <app-payment 
+          [totalAmount]="getTotalAmount()"
+          (paymentComplete)="onPaymentComplete($event)"
+          (paymentCancel)="onPaymentCancel()">
+        </app-payment>
+      </div>
+      
+      <div class="col-md-4">
+        <div class="card shadow">
+          <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Order Summary</h5>
+          </div>
+          <div class="card-body">
+            <div *ngFor="let item of cartItems" class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+              <div>
+                <strong>{{ item.book.title }}</strong><br>
+                <small class="text-muted">by {{ item.book.author }}</small>
+              </div>
+              <div class="text-end">
+                <div>Qty: {{ item.quantity }}</div>
+                <div>${{ (item.book.price * item.quantity).toFixed(2) }}</div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+              <strong>Total: ${{ getTotalAmount().toFixed(2) }}</strong>
+            </div>
+            
+            <hr>
+            <div class="mb-2">
+              <strong>Delivery Address:</strong>
+            </div>
+            <div class="text-muted small">
+              {{ checkoutForm.value.address }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Processing...</span>
+    </div>
+    <p class="mt-2">Processing your order...</p>
   </div>
 </div>

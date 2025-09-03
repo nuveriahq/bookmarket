@@ -2,8 +2,10 @@
 import { Component, OnInit } from '@angular/core';
 import { BookService } from '../../services/book.service';
 import { OrderService } from '../../services/order.service';
+import { UserService } from '../../services/user.service';
 import { Book } from '../../models/book.model';
 import { Order } from '../../models/order.model';
+import { User } from '../../models/user.model';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
 
@@ -15,30 +17,44 @@ import { Router } from '@angular/router';
 export class AdminDashboardComponent implements OnInit {
   books: Book[] = [];
   orders: Order[] = [];
+  users: User[] = [];
   editingBook: Book | null = null;
   newBook: Partial<Book> = {};
   
   // Loading and error states
   booksLoading = false;
   ordersLoading = false;
+  usersLoading = false;
   booksError = '';
   ordersError = '';
+  usersError = '';
   
   // Statistics
   stats = {
     totalBooks: 0,
     totalOrders: 0,
     totalRevenue: 0,
-    lowStockBooks: 0
+    lowStockBooks: 0,
+    totalCustomers: 0
   };
   
   // Filters
   orderStatusFilter = 'ALL';
   bookSearchTerm = '';
+  userSearchTerm = '';
+  
+  // CSV Upload
+  csvFile: File | null = null;
+  csvUploading = false;
+  csvUploadMessage = '';
+  
+  // Active tab
+  activeTab = 'books';
 
   constructor(
     private bookService: BookService,
     private orderService: OrderService,
+    private userService: UserService,
     private authService: AuthService,
     private router: Router
   ) {}
@@ -51,6 +67,7 @@ export class AdminDashboardComponent implements OnInit {
     
     this.loadBooks();
     this.loadOrders();
+    this.loadUsers();
   }
 
   loadBooks(): void {
@@ -218,6 +235,18 @@ export class AdminDashboardComponent implements OnInit {
     );
   }
 
+  filteredUsers(): User[] {
+    if (!this.userSearchTerm) {
+      return this.users;
+    }
+    const term = this.userSearchTerm.toLowerCase();
+    return this.users.filter(user => 
+      user.username.toLowerCase().includes(term) ||
+      user.email.toLowerCase().includes(term) ||
+      user.customerId?.toLowerCase().includes(term)
+    );
+  }
+
   cancelEdit(): void {
     this.editingBook = null;
   }
@@ -228,6 +257,32 @@ export class AdminDashboardComponent implements OnInit {
 
   retryOrders(): void {
     this.loadOrders();
+  }
+
+  loadUsers(): void {
+    this.usersLoading = true;
+    this.usersError = '';
+    
+    this.userService.getAllUsers().subscribe({
+      next: (users) => {
+        this.users = users;
+        this.stats.totalCustomers = users.length;
+        this.usersLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading users:', error);
+        this.usersError = 'Failed to load users';
+        this.usersLoading = false;
+      }
+    });
+  }
+
+  retryUsers(): void {
+    this.loadUsers();
+  }
+
+  setActiveTab(tab: string): void {
+    this.activeTab = tab;
   }
 
   private showSuccessMessage(message: string): void {
@@ -245,5 +300,47 @@ export class AdminDashboardComponent implements OnInit {
   viewOrderDetails(order: Order): void {
     // Implement order details modal or navigation
     console.log('View order details:', order);
+  }
+
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file && file.type === 'text/csv') {
+      this.csvFile = file;
+      this.csvUploadMessage = '';
+    } else {
+      this.csvUploadMessage = 'Please select a valid CSV file';
+      this.csvFile = null;
+    }
+  }
+
+  uploadCSV(): void {
+    if (!this.csvFile) {
+      this.csvUploadMessage = 'Please select a CSV file first';
+      return;
+    }
+
+    this.csvUploading = true;
+    this.csvUploadMessage = '';
+
+    const formData = new FormData();
+    formData.append('file', this.csvFile);
+
+    this.bookService.uploadBooksCSV(formData).subscribe({
+      next: (response) => {
+        this.csvUploading = false;
+        this.csvUploadMessage = `Successfully uploaded ${response.booksAdded} books from CSV`;
+        this.csvFile = null;
+        // Reset file input
+        const fileInput = document.getElementById('csvFile') as HTMLInputElement;
+        if (fileInput) fileInput.value = '';
+        // Reload books
+        this.loadBooks();
+      },
+      error: (error) => {
+        this.csvUploading = false;
+        this.csvUploadMessage = 'Failed to upload CSV: ' + (error.error?.message || error.message);
+        console.error('CSV upload error:', error);
+      }
+    });
   }
 }

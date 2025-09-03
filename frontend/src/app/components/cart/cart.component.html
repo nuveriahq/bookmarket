@@ -9,6 +9,7 @@
             <th>Book</th>
             <th>Author</th>
             <th>Price</th>
+            <th>Stock</th>
             <th>Quantity</th>
             <th>Total</th>
             <th>Actions</th>
@@ -20,11 +21,17 @@
             <td>{{ item.book.author }}</td>
             <td>${{ item.book.price }}</td>
             <td>
+              <span [ngClass]="item.book.stock <= 5 ? 'text-danger fw-bold' : 'text-success'">
+                {{ item.book.stock }}
+              </span>
+            </td>
+            <td>
               <div class="input-group" style="width: 120px;">
                 <button class="btn btn-outline-secondary btn-sm" type="button" 
                         (click)="updateQuantity(item.book.id!, item.quantity - 1)">-</button>
                 <input type="number" class="form-control text-center" [value]="item.quantity" readonly>
                 <button class="btn btn-outline-secondary btn-sm" type="button" 
+                        [disabled]="item.quantity >= item.book.stock"
                         (click)="updateQuantity(item.book.id!, item.quantity + 1)">+</button>
               </div>
             </td>

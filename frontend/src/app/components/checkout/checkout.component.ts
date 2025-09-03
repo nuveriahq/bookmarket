@@ -6,6 +6,7 @@ import { CartService } from '../../services/cart.service';
 import { OrderService } from '../../services/order.service';
 import { AuthService } from '../../services/auth.service';
 import { CartItem } from '../../models/order.model';
+import { PaymentData } from '../payment/payment.component';
 
 @Component({
   selector: 'app-checkout',
@@ -16,6 +17,8 @@ export class CheckoutComponent implements OnInit {
   cartItems: CartItem[] = [];
   checkoutForm: FormGroup;
   loading = false;
+  showPayment = false;
+  paymentData: PaymentData | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -54,8 +57,33 @@ export class CheckoutComponent implements OnInit {
     return this.cartService.getTotalAmount();
   }
 
-  placeOrder(): void {
+  proceedToPayment(): void {
     if (this.checkoutForm.valid && this.cartItems.length > 0) {
+      this.showPayment = true;
+    } else {
+      // Provide feedback for invalid form
+      if (this.cartItems.length === 0) {
+        alert('Your cart is empty. Please add items before checkout.');
+        this.router.navigate(['/cart']);
+      } else {
+        alert('Please fill in all required fields.');
+        this.markFormGroupTouched();
+      }
+    }
+  }
+
+  onPaymentComplete(paymentData: PaymentData): void {
+    this.paymentData = paymentData;
+    this.placeOrder();
+  }
+
+  onPaymentCancel(): void {
+    this.showPayment = false;
+    this.paymentData = null;
+  }
+
+  placeOrder(): void {
+    if (this.checkoutForm.valid && this.cartItems.length > 0 && this.paymentData) {
       this.loading = true;
       
       // FIXED: Create the proper structure matching backend expectations
@@ -64,7 +92,9 @@ export class CheckoutComponent implements OnInit {
           bookId: item.book.id!,
           quantity: item.quantity
         })),
-        shippingAddress: this.checkoutForm.value.address.trim() // FIXED: Use shippingAddress
+        shippingAddress: this.checkoutForm.value.address.trim(), // FIXED: Use shippingAddress
+        paymentMethod: this.paymentData.paymentMethod,
+        paymentDetails: this.paymentData
       };
 
       console.log('Sending order request:', orderRequest);
@@ -102,15 +132,6 @@ export class CheckoutComponent implements OnInit {
           }
         }
       });
-    } else {
-      // Provide feedback for invalid form
-      if (this.cartItems.length === 0) {
-        alert('Your cart is empty. Please add items before checkout.');
-        this.router.navigate(['/cart']);
-      } else {
-        alert('Please fill in all required fields.');
-        this.markFormGroupTouched();
-      }
     }
   }
 

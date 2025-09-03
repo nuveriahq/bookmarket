@@ -1,0 +1,214 @@
+<!-- user-profile.component.html -->
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">
+            <i class="fas fa-user me-2"></i>User Profile
+          </h3>
+        </div>
+        
+        <div class="card-body">
+          <!-- Loading Spinner -->
+          <div *ngIf="isLoading" class="text-center">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+
+          <!-- Error Message -->
+          <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>{{ errorMessage }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+
+          <!-- Success Message -->
+          <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>{{ successMessage }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+
+          <!-- Profile Information -->
+          <div *ngIf="user && !isLoading">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <div class="card bg-light">
+                  <div class="card-body">
+                    <h5 class="card-title">
+                      <i class="fas fa-id-card me-2"></i>Profile Information
+                    </h5>
+                    <p class="card-text">
+                      <strong>Customer ID:</strong> {{ user.customerId }}<br>
+                      <strong>Role:</strong> 
+                      <span class="badge" [ngClass]="user.role === 'ADMIN' ? 'bg-danger' : 'bg-success'">
+                        {{ user.role }}
+                      </span><br>
+                      <strong>Member Since:</strong> {{ user.createdDate | date:'mediumDate' }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card bg-light">
+                  <div class="card-body">
+                    <h5 class="card-title">
+                      <i class="fas fa-cog me-2"></i>Actions
+                    </h5>
+                    <div class="d-grid gap-2">
+                      <button class="btn btn-outline-primary" (click)="toggleEdit()">
+                        <i class="fas fa-edit me-2"></i>
+                        {{ isEditing ? 'Cancel Edit' : 'Edit Profile' }}
+                      </button>
+                      <button class="btn btn-outline-secondary" (click)="navigateToOrders()">
+                        <i class="fas fa-history me-2"></i>View Order History
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Profile Form -->
+            <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="username" class="form-label">
+                      <i class="fas fa-user me-1"></i>Username
+                    </label>
+                    <input 
+                      type="text" 
+                      class="form-control" 
+                      id="username"
+                      formControlName="username"
+                      [readonly]="!isEditing"
+                      [class.is-invalid]="getFieldError('username')"
+                    >
+                    <div class="invalid-feedback">{{ getFieldError('username') }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="email" class="form-label">
+                      <i class="fas fa-envelope me-1"></i>Email
+                    </label>
+                    <input 
+                      type="email" 
+                      class="form-control" 
+                      id="email"
+                      formControlName="email"
+                      [readonly]="!isEditing"
+                      [class.is-invalid]="getFieldError('email')"
+                    >
+                    <div class="invalid-feedback">{{ getFieldError('email') }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="age" class="form-label">
+                      <i class="fas fa-calendar me-1"></i>Age
+                    </label>
+                    <input 
+                      type="number" 
+                      class="form-control" 
+                      id="age"
+                      formControlName="age"
+                      [readonly]="!isEditing"
+                      [class.is-invalid]="getFieldError('age')"
+                    >
+                    <div class="invalid-feedback">{{ getFieldError('age') }}</div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="address" class="form-label">
+                      <i class="fas fa-map-marker-alt me-1"></i>Address
+                    </label>
+                    <textarea 
+                      class="form-control" 
+                      id="address"
+                      formControlName="address"
+                      rows="3"
+                      [readonly]="!isEditing"
+                      [class.is-invalid]="getFieldError('address')"
+                    ></textarea>
+                    <div class="invalid-feedback">{{ getFieldError('address') }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div *ngIf="isEditing" class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="button" class="btn btn-secondary me-md-2" (click)="toggleEdit()">
+                  Cancel
+                </button>
+                <button type="submit" class="btn btn-primary" [disabled]="profileForm.invalid || isLoading">
+                  <i class="fas fa-save me-2"></i>Save Changes
+                </button>
+              </div>
+            </form>
+
+            <!-- Change Password Section -->
+            <hr class="my-4">
+            <h5 class="mb-3">
+              <i class="fas fa-lock me-2"></i>Change Password
+            </h5>
+            
+            <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="currentPassword" class="form-label">Current Password</label>
+                    <input 
+                      type="password" 
+                      class="form-control" 
+                      id="currentPassword"
+                      formControlName="currentPassword"
+                      [class.is-invalid]="getPasswordError('currentPassword')"
+                    >
+                    <div class="invalid-feedback">{{ getPasswordError('currentPassword') }}</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="newPassword" class="form-label">New Password</label>
+                    <input 
+                      type="password" 
+                      class="form-control" 
+                      id="newPassword"
+                      formControlName="newPassword"
+                      [class.is-invalid]="getPasswordError('newPassword')"
+                    >
+                    <div class="invalid-feedback">{{ getPasswordError('newPassword') }}</div>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="mb-3">
+                    <label for="confirmPassword" class="form-label">Confirm Password</label>
+                    <input 
+                      type="password" 
+                      class="form-control" 
+                      id="confirmPassword"
+                      formControlName="confirmPassword"
+                      [class.is-invalid]="getPasswordError('confirmPassword')"
+                    >
+                    <div class="invalid-feedback">{{ getPasswordError('confirmPassword') }}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="submit" class="btn btn-warning" [disabled]="passwordForm.invalid || isLoading">
+                  <i class="fas fa-key me-2"></i>Change Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

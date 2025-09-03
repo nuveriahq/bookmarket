@@ -1,0 +1,188 @@
+<!-- payment.component.html -->
+<div class="payment-container">
+  <div class="card shadow">
+    <div class="card-header bg-primary text-white">
+      <h4 class="mb-0">
+        <i class="fas fa-credit-card me-2"></i>Payment Details
+      </h4>
+    </div>
+    
+    <div class="card-body">
+      <!-- Payment Method Selection -->
+      <div class="mb-4">
+        <h5 class="mb-3">Select Payment Method</h5>
+        <div class="row">
+          <div class="col-md-6">
+            <div class="form-check payment-method-card" 
+                 [class.selected]="selectedPaymentMethod === 'card'"
+                 (click)="onPaymentMethodChange('card')">
+              <input class="form-check-input" type="radio" name="paymentMethod" 
+                     value="card" [checked]="selectedPaymentMethod === 'card'">
+              <label class="form-check-label">
+                <i class="fas fa-credit-card me-2"></i>Credit/Debit Card
+              </label>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-check payment-method-card" 
+                 [class.selected]="selectedPaymentMethod === 'upi'"
+                 (click)="onPaymentMethodChange('upi')">
+              <input class="form-check-input" type="radio" name="paymentMethod" 
+                     value="upi" [checked]="selectedPaymentMethod === 'upi'">
+              <label class="form-check-label">
+                <i class="fas fa-mobile-alt me-2"></i>UPI Payment
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Payment Form -->
+      <div *ngIf="selectedPaymentMethod === 'card'" class="card-payment-form">
+        <h5 class="mb-3">Card Information</h5>
+        <form [formGroup]="paymentForm">
+          <div class="row">
+            <div class="col-12">
+              <div class="mb-3">
+                <label for="cardNumber" class="form-label">Card Number</label>
+                <input type="text" class="form-control" id="cardNumber"
+                       formControlName="cardNumber" placeholder="1234 5678 9012 3456"
+                       (input)="formatCardNumber($event)"
+                       [class.is-invalid]="getFieldError('cardNumber')">
+                <div class="invalid-feedback">{{ getFieldError('cardNumber') }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="expiryDate" class="form-label">Expiry Date</label>
+                <input type="text" class="form-control" id="expiryDate"
+                       formControlName="expiryDate" placeholder="MM/YY"
+                       (input)="formatExpiryDate($event)"
+                       [class.is-invalid]="getFieldError('expiryDate')">
+                <div class="invalid-feedback">{{ getFieldError('expiryDate') }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label for="cvv" class="form-label">CVV</label>
+                <input type="text" class="form-control" id="cvv"
+                       formControlName="cvv" placeholder="123"
+                       maxlength="4"
+                       [class.is-invalid]="getFieldError('cvv')">
+                <div class="invalid-feedback">{{ getFieldError('cvv') }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-12">
+              <div class="mb-3">
+                <label for="cardHolderName" class="form-label">Cardholder Name</label>
+                <input type="text" class="form-control" id="cardHolderName"
+                       formControlName="cardHolderName" placeholder="John Doe"
+                       [class.is-invalid]="getFieldError('cardHolderName')">
+                <div class="invalid-feedback">{{ getFieldError('cardHolderName') }}</div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- UPI Payment Form -->
+      <div *ngIf="selectedPaymentMethod === 'upi'" class="upi-payment-form">
+        <h5 class="mb-3">UPI Payment</h5>
+        <form [formGroup]="paymentForm">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="mb-3">
+                <label for="upiId" class="form-label">UPI ID</label>
+                <input type="text" class="form-control" id="upiId"
+                       formControlName="upiId" placeholder="yourname@paytm"
+                       [class.is-invalid]="getFieldError('upiId')">
+                <div class="invalid-feedback">{{ getFieldError('upiId') }}</div>
+                <div class="form-text">Enter your UPI ID (e.g., yourname&#64;paytm, yourname&#64;phonepe)</div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                  <button type="button" class="btn btn-outline-primary"
+                          (click)="generateUPIQR()"
+                          [disabled]="!paymentForm.get('upiId')?.valid">
+                    <i class="fas fa-qrcode me-1"></i>Generate QR Code
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- QR Code Display -->
+        <div *ngIf="showQRCode" class="qr-code-section">
+          <div class="alert alert-info">
+            <h6><i class="fas fa-info-circle me-2"></i>Scan QR Code to Pay</h6>
+            <p class="mb-2">Amount: ₹{{ totalAmount }}</p>
+            <p class="mb-0">Use any UPI app to scan and pay</p>
+          </div>
+          
+          <div class="text-center">
+            <div class="qr-code-placeholder">
+              <div class="qr-code-visual">
+                <div class="qr-pattern">
+                  <div class="qr-corner top-left"></div>
+                  <div class="qr-corner top-right"></div>
+                  <div class="qr-corner bottom-left"></div>
+                  <div class="qr-dots">
+                    <div class="qr-dot"></div>
+                    <div class="qr-dot"></div>
+                    <div class="qr-dot"></div>
+                    <div class="qr-dot"></div>
+                    <div class="qr-dot"></div>
+                    <div class="qr-dot"></div>
+                    <div class="qr-dot"></div>
+                    <div class="qr-dot"></div>
+                    <div class="qr-dot"></div>
+                  </div>
+                </div>
+              </div>
+              <p class="mt-2 text-muted">Scan this QR code with any UPI app</p>
+              <small class="text-muted">{{ qrCodeData }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Summary -->
+      <div class="payment-summary mt-4">
+        <div class="card bg-light">
+          <div class="card-body">
+            <h5 class="card-title">Payment Summary</h5>
+            <div class="d-flex justify-content-between">
+              <span>Total Amount:</span>
+              <strong>₹{{ totalAmount }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="payment-actions mt-4">
+        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+          <button type="button" class="btn btn-outline-secondary me-md-2"
+                  (click)="cancelPayment()">
+            <i class="fas fa-times me-1"></i>Cancel
+          </button>
+          <button type="button" class="btn btn-success"
+                  (click)="processPayment()"
+                  [disabled]="!paymentForm.valid">
+            <i class="fas fa-lock me-1"></i>Pay ₹{{ totalAmount }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

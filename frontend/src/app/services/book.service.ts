@@ -43,4 +43,12 @@ export class BookService {
   getAllCategories(): Observable<string[]> {
     return this.http.get<string[]>(`${this.API_URL}/categories`);
   }
+
+  uploadBooksCSV(file: FormData): Observable<{booksAdded: number}> {
+    return this.http.post<{booksAdded: number}>(`${this.API_URL}/upload-csv`, file);
+  }
+
+  getBooksPaginated(page: number = 0, size: number = 10): Observable<any> {
+    return this.http.get<any>(`${this.API_URL}/paginated?page=${page}&size=${size}`);
+  }
 }

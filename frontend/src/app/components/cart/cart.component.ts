@@ -30,10 +30,9 @@ export class CartComponent implements OnInit {
   }
 
   updateQuantity(bookId: number, newQuantity: number): void {
-    if (newQuantity > 0) {
-      this.cartService.updateQuantity(bookId, newQuantity);
-    } else if (newQuantity === 0) {
-      this.removeFromCart(bookId);
+    const success = this.cartService.updateQuantity(bookId, newQuantity);
+    if (!success && newQuantity > 0) {
+      alert('Cannot add more items than available in stock!');
     }
   }
 

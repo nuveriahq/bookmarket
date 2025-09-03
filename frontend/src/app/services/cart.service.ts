@@ -15,9 +15,17 @@ export class CartService {
     this.loadCartFromStorage();
   }
 
-  addToCart(book: Book, quantity: number = 1): void {
+  addToCart(book: Book, quantity: number = 1): boolean {
     const currentItems = this.cartItems.value;
     const existingItem = currentItems.find(item => item.book.id === book.id);
+    
+    const currentQuantity = existingItem ? existingItem.quantity : 0;
+    const newTotalQuantity = currentQuantity + quantity;
+    
+    // Check if adding this quantity would exceed stock
+    if (newTotalQuantity > book.stock) {
+      return false; // Cannot add more than available stock
+    }
 
     if (existingItem) {
       existingItem.quantity += quantity;
@@ -27,6 +35,7 @@ export class CartService {
 
     this.cartItems.next([...currentItems]);
     this.saveCartToStorage();
+    return true;
   }
 
   removeFromCart(bookId: number): void {
@@ -35,19 +44,24 @@ export class CartService {
     this.saveCartToStorage();
   }
 
-  updateQuantity(bookId: number, quantity: number): void {
+  updateQuantity(bookId: number, quantity: number): boolean {
     const currentItems = this.cartItems.value;
     const item = currentItems.find(item => item.book.id === bookId);
     
     if (item) {
       if (quantity <= 0) {
         this.removeFromCart(bookId);
+        return true;
+      } else if (quantity > item.book.stock) {
+        return false; // Cannot set quantity higher than available stock
       } else {
         item.quantity = quantity;
         this.cartItems.next([...currentItems]);
         this.saveCartToStorage();
+        return true;
       }
     }
+    return false;
   }
 
   clearCart(): void {
