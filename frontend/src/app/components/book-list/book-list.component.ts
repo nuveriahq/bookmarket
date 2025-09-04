@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { BookService } from '../../services/book.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
 import { Book } from '../../models/book.model';
 
 @Component({
@@ -32,7 +33,8 @@ export class BookListComponent implements OnInit {
   constructor(
     private bookService: BookService,
     private cartService: CartService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -132,7 +134,27 @@ export class BookListComponent implements OnInit {
     this.loadBooksPaginated();
   }
 
+  // addToCart(book: Book): void {
+  //   const success = this.cartService.addToCart(book);
+  //   if (success) {
+  //     alert('Book added to cart successfully!');
+  //   } else {
+  //     alert('Cannot add more items than available in stock!');
+  //   }
+  // }
+
+  // ... existing code ...
+
   addToCart(book: Book): void {
+    // Check if user is logged in first
+    if (!this.authService.isLoggedIn()) {
+      const shouldLogin = confirm('Please login to add items to your cart. Would you like to login now?');
+      if (shouldLogin) {
+        this.router.navigate(['/login']);
+      }
+      return;
+    }
+
     const success = this.cartService.addToCart(book);
     if (success) {
       alert('Book added to cart successfully!');

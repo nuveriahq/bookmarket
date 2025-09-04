@@ -35,10 +35,15 @@ export class CheckoutComponent implements OnInit {
   ngOnInit(): void {
     // Check if user is authenticated with improved validation
     if (!this.authService.validateToken()) {
-      console.log('User authentication validation failed, redirecting to login');
-      this.authService.clearAuthData();
-      this.router.navigate(['/login']);
-      return;
+      if (!this.authService.isLoggedIn()) {
+        alert('Please login to proceed with checkout');
+        this.router.navigate(['/login']);
+        return;
+      }
+      // console.log('User authentication validation failed, redirecting to login');
+      // this.authService.clearAuthData();
+      // this.router.navigate(['/login']);
+      // return;
     }
 
     // Debug: Log authentication info
