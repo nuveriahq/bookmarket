@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
 
 @Component({
   selector: 'app-register',
@@ -15,6 +16,7 @@ export class RegisterComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    private toastService: ToastService,
     private router: Router
   ) {
     this.registerForm = this.fb.group({
@@ -38,10 +40,11 @@ export class RegisterComponent {
       
       this.authService.register({ username, email, password, address, age }).subscribe({
         next: () => {
+          this.toastService.showSuccess('Registration successful! Please login to continue.');
           this.router.navigate(['/login']);
         },
         error: (error) => {
-          this.errorMessage = error.error?.message || 'Registration failed';
+          this.toastService.showError(error.error?.message || 'Registration failed. Please try again.');
         }
       });
     }

@@ -3,6 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { BookService } from '../../services/book.service';
 import { CartService } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
+import { ModalService } from '../../services/modal.service';
 import { Router } from '@angular/router';
 import { Book } from '../../models/book.model';
 
@@ -34,6 +36,8 @@ export class BookListComponent implements OnInit {
     private bookService: BookService,
     private cartService: CartService,
     private authService: AuthService,
+    private toastService: ToastService,
+    private modalService: ModalService,
     private router: Router
   ) {}
 
@@ -148,18 +152,22 @@ export class BookListComponent implements OnInit {
   addToCart(book: Book): void {
     // Check if user is logged in first
     if (!this.authService.isLoggedIn()) {
-      const shouldLogin = confirm('Please login to add items to your cart. Would you like to login now?');
-      if (shouldLogin) {
-        this.router.navigate(['/login']);
-      }
+      this.modalService.showConfirm(
+        'Login Required',
+        'Please login to add items to your cart. Would you like to login now?'
+      ).then((confirmed) => {
+        if (confirmed) {
+          this.router.navigate(['/login']);
+        }
+      });
       return;
     }
 
     const success = this.cartService.addToCart(book);
     if (success) {
-      alert('Book added to cart successfully!');
+      this.toastService.showSuccess('Book added to cart successfully!');
     } else {
-      alert('Cannot add more items than available in stock!');
+      this.toastService.showError('Cannot add more items than available in stock!');
     }
   }
 

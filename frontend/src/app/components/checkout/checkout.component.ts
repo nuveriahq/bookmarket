@@ -5,6 +5,8 @@ import { Router } from '@angular/router';
 import { CartService } from '../../services/cart.service';
 import { OrderService } from '../../services/order.service';
 import { AuthService } from '../../services/auth.service';
+import { ToastService } from '../../services/toast.service';
+import { ModalService } from '../../services/modal.service';
 import { CartItem } from '../../models/order.model';
 import { PaymentData } from '../payment/payment.component';
 
@@ -25,6 +27,8 @@ export class CheckoutComponent implements OnInit {
     private cartService: CartService,
     private orderService: OrderService,
     private authService: AuthService,
+    private toastService: ToastService,
+    private modalService: ModalService,
     private router: Router
   ) {
     this.checkoutForm = this.fb.group({
@@ -36,14 +40,11 @@ export class CheckoutComponent implements OnInit {
     // Check if user is authenticated with improved validation
     if (!this.authService.validateToken()) {
       if (!this.authService.isLoggedIn()) {
-        alert('Please login to proceed with checkout');
-        this.router.navigate(['/login']);
+        this.modalService.showAlert('Login Required', 'Please login to proceed with checkout').then(() => {
+          this.router.navigate(['/login']);
+        });
         return;
       }
-      // console.log('User authentication validation failed, redirecting to login');
-      // this.authService.clearAuthData();
-      // this.router.navigate(['/login']);
-      // return;
     }
 
     // Debug: Log authentication info
@@ -110,10 +111,10 @@ export class CheckoutComponent implements OnInit {
           this.cartService.clearCart();
           
           if (response.success) {
-            alert(`Order placed successfully! Order ID: ${response.orderId}`);
+            this.toastService.showSuccess(`Order placed successfully! Order ID: ${response.orderId}`);
             this.router.navigate(['/orders']);
           } else {
-            alert('Error: ' + response.message);
+            this.toastService.showError('Error: ' + response.message);
           }
         },
         error: (error) => {
@@ -122,18 +123,18 @@ export class CheckoutComponent implements OnInit {
           
           // Enhanced error handling
           if (error.status === 401) {
-            alert('Authentication expired. Please log in again.');
+            this.toastService.showError('Authentication expired. Please log in again.');
             this.authService.logout();
             this.router.navigate(['/login']);
           } else if (error.status === 400) {
             const errorMessage = error.error || 'Invalid order data. Please check your cart and try again.';
-            alert('Error: ' + errorMessage);
+            this.toastService.showError('Error: ' + errorMessage);
           } else if (error.status === 403) {
-            alert('Access denied. Please log in again.');
+            this.toastService.showError('Access denied. Please log in again.');
             this.authService.logout();
             this.router.navigate(['/login']);
           } else {
-            alert('Error placing order. Please try again.');
+            this.toastService.showError('Error placing order. Please try again.');
           }
         }
       });
